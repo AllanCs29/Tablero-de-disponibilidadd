@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Soporte - Disponibilidad</title>
+    <style>
+        :root {
+            --odoo-purple: #714B67;
+            --odoo-light: #F9F9F9;
+            --status-green: #28a745;
+            --status-blue: #17a2b8;
+            --status-red: #dc3545;
+            --status-gray: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .header {
+            background-color: var(--odoo-purple);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--status-gray);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        .card.active-office { border-top-color: var(--status-green); }
+        .card.active-home { border-top-color: var(--status-blue); }
+        .card.inactive { border-top-color: var(--status-red); }
+
+        .name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .badge-green { background-color: var(--status-green); }
+        .badge-blue { background-color: var(--status-blue); }
+        .badge-red { background-color: var(--status-red); }
+        .badge-gray { background-color: var(--status-gray); }
+
+        .schedule-info {
+            font-size: 14px;
+            color: #555;
+            background: var(--odoo-light);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            color: #495057;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #dde0e3;
+        }
+
+        .details-section {
+            display: none;
+            margin-top: 15px;
+            border-top: 1px dashed #ccc;
+            padding-top: 15px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .details-section.show {
+            display: block;
+        }
+
+        .contact-info {
+            font-size: 13px;
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        .qr-box {
+            text-align: center;
+            background: var(--odoo-light);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .day-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .day-row:last-child {
+            border-bottom: none;
+        }
+
+        .day-name {
+            font-weight: bold;
+            color: var(--odoo-purple);
+        }
+        
+        .time-blocks {
+            text-align: right;
+            line-height: 1.4;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Tablero de Disponibilidad - Soporte (Pasantes)</h1>
+        <p id="current-time">Actualizando hora...</p>
+    </div>
+
+    <div class="grid" id="team-grid"></div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="dot badge-green"></div> Disponible (Oficina)</div>
+        <div class="legend-item"><div class="dot badge-blue"></div> Disponible (Home Office)</div>
+        <div class="legend-item"><div class="dot badge-red"></div> Fuera de horario / Clases</div>
+        <div class="legend-item"><div class="dot badge-gray"></div> Horario Pendiente</div>
+    </div>
+
+    <script>
+        const team = [
+            {
+                name: 'Grecia',
+                fullName: 'Grecia Berenice Vázquez Sánchez',
+                phone: '524423184083', 
+                type: 'Activo',
+                schedule: {
+                    1: [{ start: 8, end: 14, type: 'Oficina' }],
+                    2: [{ start: 8, end: 12, type: 'Oficina' }],
+                    3: [{ start: 11, end: 14, type: 'Home Office' }],
+                    4: [{ start: 8, end: 14, type: 'Oficina' }],
+                    5: [{ start: 11, end: 16, type: 'Home Office' }]
+                }
+            },
+            {
+                name: 'Moises',
+                fullName: 'Moises Enoc Mondragon Islas',
+                phone: '525564397735',
+                type: 'Activo',
+                schedule: {
+                    1: [{ start: 8, end: 11, type: 'Oficina' },{start: 15, end: 17, type: 'Home Office'}],
+                    2: [{ start: 8, end: 12, type: 'Oficina' }],
+                    3: [{ start: 8, end: 12, type: 'Oficina' },{start: 16, end: 17, type: 'Home Office'}],
+                    4: [{start: 16, end: 17, type: 'Home Office'}], 
+                    5: [{ start: 8, end: 13, type: 'Home Office' }]
+                }
+            },
+            {
+                name: 'Emmanuel (Emma)',
+                fullName: 'Jose Emmanuel Mota Leyva',
+                phone: '522481770934',
+                type: 'Activo',
+                schedule: {
+                    1: [{ start: 8, end: 11, type: 'Oficina' },{start: 15, end: 17, type: 'Home Office'}],
+                    2: [{ start: 8, end: 12, type: 'Oficina' }],
+                    3: [{ start: 8, end: 12, type: 'Oficina' },{start: 16, end: 17, type: 'Home Office'}],
+                    4: [{start: 16, end: 17, type: 'Home Office'}], 
+                    5: [{ start: 8, end: 13, type: 'Home Office' }]
+                }
+            },
+            {
+                name: 'Charly',
+                fullName: 'Carlos Daniel Bravo Cardenas',
+                phone: '525571801567',
+                type: 'Activo',
+                schedule: {
+                    1: [
+                        { start: 9, end: 11, type: 'Home Office' },
+                        { start: 13, end: 16, type: 'Home Office' },
+                    ],
+                    2: [
+                        { start: 7, end: 9, type: 'Home Office' },
+                        { start: 11, end: 13, type: 'Home Office' },
+                    ],
+                    3: [
+                        { start: 7, end: 11, type: 'Oficina' },
+                        { start: 11, end: 13, type: 'Oficina' },
+                        { start: 15, end: 17, type: 'Home Office' }
+                    ],
+                    4: [
+                        { start: 7, end: 11, type: 'Home Office' },
+                        { start: 15, end: 16, type: 'Home Office' },
+                    ],
+                    5: [
+                        { start: 7, end: 11, type: 'Home Office' },
+                        { start: 14, end: 18, type: 'Home Office' },
+                    ]
+                }
+            },
+            {
+                name: 'Mario',
+                fullName: 'Mario Yael Gordillo García',
+                phone: '525610919906',
+                type: 'Activo',
+                schedule: {1: [{ start: 8, end: 17, type: 'Oficina' }],
+                    2: [{ start: 8, end: 17, type: 'Oficina' }],
+                    3: [{ start: 8, end: 17, type: 'Oficina' }],
+                    4: [{ start: 8, end: 17, type: 'Oficina' }],
+                    5: [{ start: 8, end: 17, type: 'Home Office' }]}
+            },
+            {
+                name: 'Allan',
+                fullName: 'Allan Casaos Meraz',
+                phone: '525524023052',
+                type: 'Activo',
+                schedule: {
+                    1: [{ start: 8, end: 17, type: 'Oficina' }],
+                    2: [{ start: 8, end: 17, type: 'Oficina' }],
+                    3: [{ start: 8, end: 17, type: 'Oficina' }],
+                    4: [{ start: 8, end: 17, type: 'Oficina' }],
+                    5: [{ start: 8, end: 17, type: 'Home Office' }]
+                }
+            }
+        ];
+
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+        function formatHour(hour) {
+            if (hour === 12) return '12:00 PM';
+            if (hour > 12) return (hour - 12) + ':00 PM';
+            return hour + ':00 AM';
+        }
+
+        function generateWeeklyScheduleHTML(member) {
+            if (member.type === 'Pendiente') {
+                return '<div class="day-row"><span style="color:#888;">No hay horarios registrados aún.</span></div>';
+            }
+            
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                const dayName = days[i];
+                const dayBlocks = member.schedule[i];
+                
+                let timeText = '';
+                
+                if (!dayBlocks || dayBlocks.length === 0) {
+                    timeText = '<span style="color:var(--status-red);">Día Libre / Clases</span>';
+                } else {
+                    timeText = dayBlocks.map(block => {
+                        const icon = block.type === 'Home Office' ? '🏠' : '🏢';
+                        return `<div>${icon} ${formatHour(block.start)} a ${formatHour(block.end)}</div>`;
+                    }).join('');
+                }
+                
+                html += `
+                    <div class="day-row">
+                        <span class="day-name">${dayName}</span>
+                        <div class="time-blocks">${timeText}</div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        function toggleView(showId, hideId) {
+            const showDiv = document.getElementById(showId);
+            const hideDiv = document.getElementById(hideId);
+            
+            if (showDiv.classList.contains('show')) {
+                showDiv.classList.remove('show');
+            } else {
+                hideDiv.classList.remove('show');
+                showDiv.classList.add('show');
+            }
+        }
+
+        function updateDashboard() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const currentHour = now.getHours() + (now.getMinutes() / 60);
+
+            document.getElementById('current-time').innerText = 
+                `${days[currentDay]} | ${now.toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})} hrs`;
+
+            const grid = document.getElementById('team-grid');
+            
+            if (grid.innerHTML === '') {
+                team.forEach((member, index) => {
+                    let statusClass = 'inactive';
+                    let badgeClass = 'badge-red';
+                    let statusText = 'No Disponible';
+                    let scheduleText = 'Sin horario asignado hoy';
+
+                    if (member.type === 'Pendiente') {
+                        badgeClass = 'badge-gray';
+                        statusText = 'Horario por definir';
+                        scheduleText = 'Pendiente de asignar';
+                    } 
+                    else if (currentDay >= 1 && currentDay <= 5) {
+                        const todayBlocks = member.schedule[currentDay];
+                        
+                        if (todayBlocks && todayBlocks.length > 0) {
+                            scheduleText = todayBlocks.map(block => {
+                                const icon = block.type === 'Home Office' ? '🏠' : '🏢';
+                                return `${icon} ${formatHour(block.start)} a ${formatHour(block.end)}`;
+                            }).join('<br>');
+                            
+                            const activeBlock = todayBlocks.find(b => currentHour >= b.start && currentHour < b.end);
+                            
+                            if (activeBlock) {
+                                if (activeBlock.type === 'Home Office') {
+                                    statusClass = 'active-home';
+                                    badgeClass = 'badge-blue';
+                                    statusText = 'En Línea (Home Office)';
+                                } else {
+                                    statusClass = 'active-office';
+                                    badgeClass = 'badge-green';
+                                    statusText = 'En Oficina';
+                                }
+                            }
+                        } else {
+                            scheduleText = 'Día libre / Clases';
+                        }
+                    } else {
+                        scheduleText = 'Fin de semana';
+                    }
+                    
+                    const cleanPhone = member.phone.replace(/\D/g, '');
+
+                    const cardHTML = `
+                        <div class="card ${statusClass}">
+                            <div class="name">${member.name}</div>
+                            <div class="status-badge ${badgeClass}">${statusText}</div>
+                            <div class="schedule-info">
+                                <strong>Horario de hoy:</strong><br>
+                                ${scheduleText}
+                            </div>
+                            
+                            <div class="btn-group">
+                                <button class="action-btn" onclick="toggleView('schedule-${index}', 'info-${index}')">📅 Horario</button>
+                                <button class="action-btn" onclick="toggleView('info-${index}', 'schedule-${index}')">📱 Info</button>
+                            </div>
+                            
+                            <div class="details-section" id="schedule-${index}">
+                                <strong style="display:block; margin-bottom: 10px; color: var(--odoo-purple);">Calendario Semanal:</strong>
+                                ${generateWeeklyScheduleHTML(member)}
+                            </div>
+                            
+                            <div class="details-section" id="info-${index}">
+                                <strong style="display:block; margin-bottom: 5px; color: var(--odoo-purple);">Datos de Contacto:</strong>
+                                <div class="contact-info">
+                                    <strong>Nombre:</strong> ${member.fullName}<br>
+                                    <strong>Teléfono:</strong> <a href="tel:${cleanPhone}" style="color: var(--status-blue); text-decoration: none;">${member.phone}</a>
+                                </div>
+                                
+                                <div class="qr-box">
+                                    <span style="font-size: 12px; color: #555; font-weight: bold;">Escanear para WhatsApp</span><br>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://wa.me/${cleanPhone}" alt="WhatsApp QR" style="border-radius: 5px; margin-top: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += cardHTML;
+                });
+            }
+        }
+
+        updateDashboard();
+        setInterval(updateDashboard, 60000); 
+    </script>
+</body>
+</html>
