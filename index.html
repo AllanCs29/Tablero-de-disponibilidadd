@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tablero de Soporte - Disponibilidad</title>
+    
+    <!-- LIBRERÍA DE ICONOS FLATICON (Uicons) -->
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
     <style>
         :root {
             --odoo-purple: #714B67;
@@ -106,6 +110,10 @@
         }
 
         .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             flex: 1;
             padding: 8px;
             background-color: #e9ecef;
@@ -171,6 +179,14 @@
             line-height: 1.4;
         }
 
+        .time-block-item {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-bottom: 3px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -204,7 +220,7 @@
 <body>
 
     <div class="header">
-        <h1>Tablero de Disponibilidad - Soporte (Pasantes)</h1>
+        <h1>Tablero de Disponibilidad - Soporte - Desarrollo</h1>
         <p id="current-time">Actualizando hora...</p>
     </div>
 
@@ -292,16 +308,31 @@
                 fullName: 'Mario Yael Gordillo García',
                 phone: '525610919906',
                 type: 'Activo',
-                schedule: {1: [{ start: 8, end: 17, type: 'Oficina' }],
+                schedule: {
+                    1: [{ start: 8, end: 17, type: 'Oficina' }],
                     2: [{ start: 8, end: 17, type: 'Oficina' }],
                     3: [{ start: 8, end: 17, type: 'Oficina' }],
                     4: [{ start: 8, end: 17, type: 'Oficina' }],
-                    5: [{ start: 8, end: 17, type: 'Home Office' }]}
+                    5: [{ start: 8, end: 17, type: 'Home Office' }]
+                }
             },
             {
                 name: 'Allan',
                 fullName: 'Allan Casaos Meraz',
                 phone: '525524023052',
+                type: 'Activo',
+                schedule: {
+                    1: [{ start: 8, end: 17, type: 'Oficina' }],
+                    2: [{ start: 8, end: 17, type: 'Oficina' }],
+                    3: [{ start: 8, end: 17, type: 'Oficina' }],
+                    4: [{ start: 8, end: 17, type: 'Oficina' }],
+                    5: [{ start: 8, end: 17, type: 'Home Office' }]
+                }
+            },
+            {
+                name: 'Lupita',
+                fullName: 'Guadalupe Juarez ',
+                phone: '525629639027',
                 type: 'Activo',
                 schedule: {
                     1: [{ start: 8, end: 17, type: 'Oficina' }],
@@ -337,8 +368,11 @@
                     timeText = '<span style="color:var(--status-red);">Día Libre / Clases</span>';
                 } else {
                     timeText = dayBlocks.map(block => {
-                        const icon = block.type === 'Home Office' ? '🏠' : '🏢';
-                        return `<div>${icon} ${formatHour(block.start)} a ${formatHour(block.end)}</div>`;
+                        // AQUÍ INYECTAMOS LOS ICONOS DE FLATICON
+                        const icon = block.type === 'Home Office' 
+                            ? '<i class="fi fi-rr-home" style="color: var(--status-blue);"></i>' 
+                            : '<i class="fi fi-rr-building" style="color: var(--status-green);"></i>';
+                        return `<div class="time-block-item">${icon} ${formatHour(block.start)} a ${formatHour(block.end)}</div>`;
                     }).join('');
                 }
                 
@@ -391,9 +425,12 @@
                         
                         if (todayBlocks && todayBlocks.length > 0) {
                             scheduleText = todayBlocks.map(block => {
-                                const icon = block.type === 'Home Office' ? '🏠' : '🏢';
-                                return `${icon} ${formatHour(block.start)} a ${formatHour(block.end)}`;
-                            }).join('<br>');
+                                // ICONOS FLATICON EN LA VISTA PRINCIPAL
+                                const icon = block.type === 'Home Office' 
+                                    ? '<i class="fi fi-rr-home" style="color: var(--status-blue);"></i>' 
+                                    : '<i class="fi fi-rr-building" style="color: var(--status-green);"></i>';
+                                return `<div class="time-block-item" style="justify-content: flex-start;">${icon} ${formatHour(block.start)} a ${formatHour(block.end)}</div>`;
+                            }).join('');
                             
                             const activeBlock = todayBlocks.find(b => currentHour >= b.start && currentHour < b.end);
                             
@@ -423,12 +460,17 @@
                             <div class="status-badge ${badgeClass}">${statusText}</div>
                             <div class="schedule-info">
                                 <strong>Horario de hoy:</strong><br>
-                                ${scheduleText}
+                                <div style="margin-top: 5px;">${scheduleText}</div>
                             </div>
                             
                             <div class="btn-group">
-                                <button class="action-btn" onclick="toggleView('schedule-${index}', 'info-${index}')">📅 Horario</button>
-                                <button class="action-btn" onclick="toggleView('info-${index}', 'schedule-${index}')">📱 Info</button>
+                                <!-- ICONOS FLATICON EN LOS BOTONES -->
+                                <button class="action-btn" onclick="toggleView('schedule-${index}', 'info-${index}')">
+                                    <i class="fi fi-rr-calendar"></i> Horario
+                                </button>
+                                <button class="action-btn" onclick="toggleView('info-${index}', 'schedule-${index}')">
+                                    <i class="fi fi-rr-smartphone"></i> Info
+                                </button>
                             </div>
                             
                             <div class="details-section" id="schedule-${index}">
