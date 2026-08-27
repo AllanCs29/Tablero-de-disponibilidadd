@@ -1,501 +1,631 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero de Soporte - Disponibilidad</title>
-    
-    <!-- LIBRERÍA DE ICONOS FLATICON (Uicons) -->
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Soporte - Disponibilidad y Tareas</title>
+    
+    <!-- LIBRERÍA DE ICONOS FLATICON (Uicons) -->
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
-    <style>
-        :root {
-            --odoo-purple: #714B67;
-            --odoo-light: #F9F9F9;
-            --status-green: #28a745;
-            --status-blue: #17a2b8;
-            --status-red: #dc3545;
-            --status-gray: #6c757d;
-        }
+    <style>
+        :root {
+            --odoo-purple: #714B67;
+            --odoo-light: #F9F9F9;
+            --status-green: #28a745;
+            --status-blue: #17a2b8;
+            --status-red: #dc3545;
+            --status-gray: #6c757d;
+            --task-pending: #ffc107;
+            --task-done: #20c997;
+            --border-color: #e0e0e0;
+        }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
 
-        .header {
-            background-color: var(--odoo-purple);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+        /* HEADER Y TABS */
+        .header { background-color: var(--odoo-purple); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; font-size: 16px; opacity: 0.9; }
 
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
+        .tabs { display: flex; background: white; padding: 0 20px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .tab-btn { padding: 15px 20px; border: none; background: none; font-size: 15px; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
+        .tab-btn:hover { color: var(--odoo-purple); }
+        .tab-btn.active { color: var(--odoo-purple); border-bottom: 3px solid var(--odoo-purple); }
 
-        .header p {
-            margin: 5px 0 0 0;
-            font-size: 16px;
-            opacity: 0.9;
-        }
+        .view-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .view-section.active { display: block; }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+        /* GRID ORIGINAL DE DISPONIBILIDAD */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 5px solid var(--status-gray); transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .card.active-office { border-top-color: var(--status-green); }
+        .card.active-home { border-top-color: var(--status-blue); }
+        .card.inactive { border-top-color: var(--status-red); }
+        .name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 15px; }
+        .badge-green { background-color: var(--status-green); }
+        .badge-blue { background-color: var(--status-blue); }
+        .badge-red { background-color: var(--status-red); }
+        .badge-gray { background-color: var(--status-gray); }
+        .schedule-info { font-size: 14px; color: #555; background: var(--odoo-light); padding: 10px; border-radius: 5px; margin-bottom: 15px; line-height: 1.5; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .action-btn { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 8px; background-color: #e9ecef; border: 1px solid #ced4da; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; color: #495057; transition: background-color 0.2s; }
+        .action-btn:hover { background-color: #dde0e3; }
+        .details-section { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px; animation: fadeIn 0.3s; }
+        .details-section.show { display: block; }
+        .contact-info { font-size: 13px; margin-bottom: 15px; color: #444; }
+        .qr-box { text-align: center; background: var(--odoo-light); padding: 10px; border-radius: 10px; margin-top: 10px; }
+        .day-row { display: flex; justify-content: space-between; align-items: flex-start; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .day-row:last-child { border-bottom: none; }
+        .day-name { font-weight: bold; color: var(--odoo-purple); }
+        .time-blocks { text-align: right; line-height: 1.4; }
+        .time-block-item { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-bottom: 3px; }
+        .legend { display: flex; justify-content: center; gap: 20px; margin-top: 20px; background: white; padding: 15px; border-radius: 10px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
 
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-top: 5px solid var(--status-gray);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+        /* SECCIÓN TAREAS & LOGIN */
+        .login-container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; }
+        .login-container input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; }
+        .btn-primary { background-color: var(--odoo-purple); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary:hover { background-color: #5a3c52; }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
+        #task-dashboard { display: none; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .calendar-header h2 { margin: 0; color: var(--odoo-purple); }
+        .calendar-nav button { background: none; border: 1px solid #ddd; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .calendar-nav button:hover { background: #f0f0f0; }
 
-        .card.active-office { border-top-color: var(--status-green); }
-        .card.active-home { border-top-color: var(--status-blue); }
-        .card.inactive { border-top-color: var(--status-red); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        .calendar-day-header { background: var(--odoo-light); font-weight: bold; text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+        .calendar-cell { min-height: 120px; padding: 10px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); background: white; position: relative; }
+        .calendar-cell:nth-child(7n) { border-right: none; }
+        .calendar-cell.other-month { background: #fafafa; color: #aaa; }
+        .date-number { font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #555; }
+        .date-number.today { background: var(--odoo-purple); color: white; padding: 2px 6px; border-radius: 50%; display: inline-block; }
 
-        .name {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
+        /* TAREAS CHIPS */
+        .task-chip { padding: 6px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #333; margin-bottom: 5px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: transform 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid transparent; }
+        .task-chip:hover { transform: scale(1.02); }
+        .task-pending { background-color: #fff3cd; border-left-color: var(--task-pending); }
+        .task-done { background-color: #d1e7dd; border-left-color: var(--task-done); text-decoration: line-through; color: #666; }
 
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 15px;
-        }
+        .btn-add-task { position: fixed; bottom: 30px; right: 30px; background-color: var(--status-green); color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 100; }
+        .btn-add-task:hover { transform: scale(1.05); background-color: #218838; }
 
-        .badge-green { background-color: var(--status-green); }
-        .badge-blue { background-color: var(--status-blue); }
-        .badge-red { background-color: var(--status-red); }
-        .badge-gray { background-color: var(--status-gray); }
+        /* MODALES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal { background: white; width: 90%; max-width: 500px; border-radius: 10px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; max-height: 85vh; overflow-y: auto; }
+        .close-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+        .modal h3 { margin-top: 0; color: var(--odoo-purple); border-bottom: 2px solid var(--odoo-light); padding-bottom: 10px; }
+        
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #555;}
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
 
-        .schedule-info {
-            font-size: 14px;
-            color: #555;
-            background: var(--odoo-light);
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
+        /* SECCIÓN COMENTARIOS Y ADJUNTOS */
+        .comments-section { background: var(--odoo-light); padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .comment-item { border-bottom: 1px solid #ddd; padding: 10px 0; font-size: 13px; }
+        .comment-item:last-child { border-bottom: none; }
+        .comment-user { font-weight: bold; color: var(--odoo-purple); text-transform: capitalize; }
+        .comment-date { font-size: 10px; color: #888; margin-left: 5px; }
+        .comment-text { margin-top: 6px; line-height: 1.4; word-wrap: break-word;}
+        .evidence-img { max-width: 100%; border-radius: 5px; margin-top: 8px; border: 1px solid #ccc; max-height: 200px; object-fit: contain; background: white; cursor: pointer; }
+        
+        .chat-input-area { display: flex; gap: 8px; align-items: center; margin-top: 10px; background: white; padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
+        .chat-input-area input[type="text"] { border: none; flex: 1; padding: 8px; outline: none; }
+        .attach-btn { background: none; border: none; font-size: 18px; color: #666; cursor: pointer; padding: 5px; }
+        .attach-btn:hover { color: var(--odoo-purple); }
+        .send-btn { background: var(--odoo-purple); color: white; border: none; border-radius: 4px; padding: 8px 15px; cursor: pointer; }
+        .send-btn:hover { background: #5a3c52; }
+        
+        #preview-container { display: none; margin-top: 10px; text-align: right; }
+        #preview-image { max-height: 60px; border-radius: 4px; border: 1px solid #ddd; }
+        .remove-preview { color: red; cursor: pointer; font-size: 12px; margin-left: 5px; font-weight: bold; }
 
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            flex: 1;
-            padding: 8px;
-            background-color: #e9ecef;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            color: #495057;
-            transition: background-color 0.2s;
-        }
-
-        .action-btn:hover {
-            background-color: #dde0e3;
-        }
-
-        .details-section {
-            display: none;
-            margin-top: 15px;
-            border-top: 1px dashed #ccc;
-            padding-top: 15px;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        .details-section.show {
-            display: block;
-        }
-
-        .contact-info {
-            font-size: 13px;
-            margin-bottom: 15px;
-            color: #444;
-        }
-
-        .qr-box {
-            text-align: center;
-            background: var(--odoo-light);
-            padding: 10px;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-
-        .day-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            font-size: 13px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .day-row:last-child {
-            border-bottom: none;
-        }
-
-        .day-name {
-            font-weight: bold;
-            color: var(--odoo-purple);
-        }
-        
-        .time-blocks {
-            text-align: right;
-            line-height: 1.4;
-        }
-
-        .time-block-item {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 6px;
-            margin-bottom: 3px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-    </style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Tablero de Disponibilidad - Soporte - Desarrollo</h1>
-        <p id="current-time">Actualizando hora...</p>
-    </div>
+    <div class="header">
+        <h1>Centro de Control - Odoo y Soporte</h1>
+        <p id="current-time">Actualizando hora...</p>
+    </div>
 
-    <div class="grid" id="team-grid"></div>
+    <!-- TABS DE NAVEGACIÓN -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('disponibilidad')">
+            <i class="fi fi-rr-users-alt"></i> Disponibilidad
+        </button>
+        <button class="tab-btn" onclick="switchTab('tareas')">
+            <i class="fi fi-rr-calendar-check"></i> Gestión de Tareas
+        </button>
+        <div style="flex-grow: 1;"></div>
+        <div id="user-info" style="display: none; align-items: center; gap: 10px; font-weight: bold; color: var(--odoo-purple);">
+            <i class="fi fi-rr-user"></i> <span id="logged-user-name"></span>
+            <button onclick="logout()" style="background:none; border:none; color:var(--status-red); cursor:pointer; text-decoration:underline; font-size: 12px;">Salir</button>
+        </div>
+    </div>
 
-    <div class="legend">
-        <div class="legend-item"><div class="dot badge-green"></div> Disponible (Oficina)</div>
-        <div class="legend-item"><div class="dot badge-blue"></div> Disponible (Home Office)</div>
-        <div class="legend-item"><div class="dot badge-red"></div> Fuera de horario </div>
-    </div>
+    <!-- VISTA 1: DISPONIBILIDAD -->
+    <div id="view-disponibilidad" class="view-section active">
+        <div class="grid" id="team-grid"></div>
+        <div class="legend">
+            <div class="legend-item"><div class="dot badge-green"></div> Disponible (Oficina)</div>
+            <div class="legend-item"><div class="dot badge-blue"></div> Disponible (Home Office)</div>
+            <div class="legend-item"><div class="dot badge-red"></div> Fuera de horario </div>
+        </div>
+    </div>
 
-    <script>
-        const team = [
-            {
-                name: 'Grecia',
-                fullName: 'Grecia Berenice Vázquez Sánchez',
-                phone: '524423184083', 
-                type: 'Activo',
-                schedule: {
-                    1: [{ start: 8, end: 14, type: 'Oficina' }],
-                    2: [{ start: 8, end: 12, type: 'Oficina' }],
-                    3: [{ start: 11, end: 14, type: 'Home Office' }],
-                    4: [{ start: 8, end: 14, type: 'Oficina' }],
-                    5: [{ start: 11, end: 16, type: 'Home Office' }]
-                }
-            },
-            {
-                name: 'Moises',
-                fullName: 'Moises Enoc Mondragon Islas',
-                phone: '525564397735',
-                type: 'Activo',
-                schedule: {
-                    1: [{ start: 8, end: 11, type: 'Oficina' },{start: 15, end: 17, type: 'Home Office'}],
-                    2: [{ start: 8, end: 12, type: 'Oficina' }],
-                    3: [{ start: 8, end: 12, type: 'Oficina' },{start: 16, end: 17, type: 'Home Office'}],
-                    4: [{start: 16, end: 17, type: 'Home Office'}], 
-                    5: [{ start: 8, end: 13, type: 'Home Office' }]
-                }
-            },
-            {
-                name: 'Emmanuel (Emma)',
-                fullName: 'Jose Emmanuel Mota Leyva',
-                phone: '522481770934',
-                type: 'Activo',
-                schedule: {
-                    1: [{ start: 8, end: 11, type: 'Oficina' },{start: 15, end: 17, type: 'Home Office'}],
-                    2: [{ start: 8, end: 12, type: 'Oficina' }],
-                    3: [{ start: 8, end: 12, type: 'Oficina' },{start: 16, end: 17, type: 'Home Office'}],
-                    4: [{start: 16, end: 17, type: 'Home Office'}], 
-                    5: [{ start: 8, end: 13, type: 'Home Office' }]
-                }
-            },
-            {
-                name: 'Charly',
-                fullName: 'Carlos Daniel Bravo Cardenas',
-                phone: '525571801567',
-                type: 'Activo',
-                schedule: {
-                    1: [
-                        { start: 9, end: 11, type: 'Home Office' },
-                        { start: 13, end: 16, type: 'Home Office' },
-                    ],
-                    2: [
-                        { start: 8, end: 11, type: 'Oficina' },
-                    ],
-                    3: [
-                        { start: 8, end: 11, type: 'Oficina' },
-                        { start: 15, end: 17, type: 'Home Office' },
-                    ],
-                    4: [
-                        { start: 8, end: 11, type: 'Home Office' },
-                        { start: 15, end: 16, type: 'Home Office' },
-                    ],
-                    5: [
-                        { start: 8, end: 11, type: 'Home Office' },
-                        { start: 14, end: 18, type: 'Home Office' },
-                    ]
-                }
-            },
-            {
-                name: 'Mario',
-                fullName: 'Mario Yael Gordillo García',
-                phone: '525610919906',
-                type: 'Activo',
-                schedule: {
-                    1: [{ start: 8, end: 17, type: 'Oficina' }],
-                    2: [{ start: 8, end: 17, type: 'Oficina' }],
-                    3: [{ start: 8, end: 17, type: 'Oficina' }],
-                    4: [{ start: 8, end: 17, type: 'Oficina' }],
-                    5: [{ start: 8, end: 17, type: 'Home Office' }]
-                }
-            },
-            {
-                name: 'Allan',
-                fullName: 'Allan Casaos Meraz',
-                phone: '525524023052',
-                type: 'Activo',
-                schedule: {
-                    1: [{ start: 8, end: 17, type: 'Oficina' }],
-                    2: [{ start: 8, end: 17, type: 'Oficina' }],
-                    3: [{ start: 8, end: 17, type: 'Oficina' }],
-                    4: [{ start: 8, end: 17, type: 'Oficina' }],
-                    5: [{ start: 8, end: 17, type: 'Home Office' }]
-                }
-            },
-            {
-                name: 'Lupita',
-                fullName: 'Guadalupe Juarez Arredondo',
-                phone: '525629639027',
-                type: 'Activo',
-                schedule: {
-                    1: [{ start: 8, end: 17, type: 'Oficina' }],
-                    2: [{ start: 8, end: 17, type: 'Oficina' }],
-                    3: [{ start: 8, end: 17, type: 'Oficina' }],
-                    4: [{ start: 8, end: 17, type: 'Oficina' }],
-                    5: [{ start: 8, end: 17, type: 'Home Office' }]
-                }
-            }
-        ];
+    <!-- VISTA 2: GESTIÓN DE TAREAS -->
+    <div id="view-tareas" class="view-section">
+        
+        <!-- PANTALLA DE LOGIN -->
+        <div id="login-screen" class="login-container">
+            <h2 style="color: var(--odoo-purple);"><i class="fi fi-rr-lock"></i> Acceso a Tareas</h2>
+            <p style="font-size: 14px; color: #666;">Ingresa tus credenciales para acceder al tablero de equipo.</p>
+            <input type="text" id="login-user" placeholder="Usuario (ej. charly, moises, allan)">
+            <input type="password" id="login-pass" placeholder="Contraseña">
+            <button class="btn-primary" onclick="login()">Ingresar</button>
+            <p id="login-error" style="color: red; font-size: 12px; display: none; margin-top: 10px;">Usuario o contraseña incorrectos.</p>
+        </div>
 
-        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        <!-- TABLERO CALENDARIO -->
+        <div id="task-dashboard">
+            <div class="calendar-header">
+                <h2><i class="fi fi-rr-calendar"></i> Calendario de Tareas - <span id="month-year-display"></span></h2>
+                <div class="calendar-nav">
+                    <button onclick="changeMonth(-1)"><i class="fi fi-rr-angle-left"></i> Anterior</button>
+                    <button onclick="changeMonth(1)">Siguiente <i class="fi fi-rr-angle-right"></i></button>
+                </div>
+            </div>
 
-        function formatHour(hour) {
-            if (hour === 12) return '12:00 PM';
-            if (hour > 12) return (hour - 12) + ':00 PM';
-            return hour + ':00 AM';
-        }
+            <div class="calendar-grid">
+                <div class="calendar-day-header">Dom</div>
+                <div class="calendar-day-header">Lun</div>
+                <div class="calendar-day-header">Mar</div>
+                <div class="calendar-day-header">Mié</div>
+                <div class="calendar-day-header">Jue</div>
+                <div class="calendar-day-header">Vie</div>
+                <div class="calendar-day-header">Sáb</div>
+            </div>
+            
+            <div class="legend" style="margin-top: 15px; justify-content: flex-start; padding: 10px 20px;">
+                <div class="legend-item"><div class="dot" style="background:var(--task-pending);"></div> Pendiente</div>
+                <div class="legend-item"><div class="dot" style="background:var(--task-done);"></div> Completada</div>
+            </div>
+        </div>
+    </div>
 
-        function generateWeeklyScheduleHTML(member) {
-            if (member.type === 'Pendiente') {
-                return '<div class="day-row"><span style="color:#888;">No hay horarios registrados aún.</span></div>';
-            }
-            
-            let html = '';
-            for (let i = 1; i <= 5; i++) {
-                const dayName = days[i];
-                const dayBlocks = member.schedule[i];
-                
-                let timeText = '';
-                
-                if (!dayBlocks || dayBlocks.length === 0) {
-                    timeText = '<span style="color:var(--status-red);">Día Libre / Clases</span>';
-                } else {
-                    timeText = dayBlocks.map(block => {
-                        // AQUÍ INYECTAMOS LOS ICONOS DE FLATICON
-                        const icon = block.type === 'Home Office' 
-                            ? '<i class="fi fi-rr-home" style="color: var(--status-blue);"></i>' 
-                            : '<i class="fi fi-rr-building" style="color: var(--status-green);"></i>';
-                        return `<div class="time-block-item">${icon} ${formatHour(block.start)} a ${formatHour(block.end)}</div>`;
-                    }).join('');
-                }
-                
-                html += `
-                    <div class="day-row">
-                        <span class="day-name">${dayName}</span>
-                        <div class="time-blocks">${timeText}</div>
-                    </div>
-                `;
-            }
-            return html;
-        }
+    <!-- BOTON FLOTANTE: SOLO PARA ALLAN -->
+    <button id="btn-create-task" class="btn-add-task" onclick="openCreateModal()" title="Nueva Tarea">
+        <i class="fi fi-rr-plus"></i>
+    </button>
 
-        function toggleView(showId, hideId) {
-            const showDiv = document.getElementById(showId);
-            const hideDiv = document.getElementById(hideId);
-            
-            if (showDiv.classList.contains('show')) {
-                showDiv.classList.remove('show');
-            } else {
-                hideDiv.classList.remove('show');
-                showDiv.classList.add('show');
-            }
-        }
+    <!-- MODAL: CREAR TAREA -->
+    <div class="modal-overlay" id="modal-create">
+        <div class="modal">
+            <button class="close-modal" onclick="closeModals()">&times;</button>
+            <h3><i class="fi fi-rr-edit"></i> Asignar Nueva Tarea</h3>
+            <div class="form-group">
+                <label>Título de la Tarea:</label>
+                <input type="text" id="new-task-title" placeholder="Ej. Revisar cotizador Odoo">
+            </div>
+            <div class="form-group">
+                <label>Asignar a:</label>
+                <select id="new-task-assignee">
+                    <option value="charly">Charly</option>
+                    <option value="moises">Moises</option>
+                    <option value="allan">Allan</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Fecha de entrega:</label>
+                <input type="date" id="new-task-date">
+            </div>
+            <div class="form-group">
+                <label>Descripción / Instrucciones:</label>
+                <textarea id="new-task-desc" rows="3" placeholder="Detalles de lo que se necesita..."></textarea>
+            </div>
+            <button class="btn-primary" onclick="saveTask()">Crear Tarea</button>
+        </div>
+    </div>
 
-        function updateDashboard() {
-            const now = new Date();
-            const currentDay = now.getDay();
-            const currentHour = now.getHours() + (now.getMinutes() / 60);
+    <!-- MODAL: VER/EDITAR TAREA -->
+    <div class="modal-overlay" id="modal-view">
+        <div class="modal">
+            <button class="close-modal" onclick="closeModals()">&times;</button>
+            <h3 id="view-task-title">Título de Tarea</h3>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px;">
+                <div><i class="fi fi-rr-user"></i> Asignado: <strong id="view-task-assignee" style="color:var(--odoo-purple); text-transform: capitalize;"></strong></div>
+                <div><i class="fi fi-rr-calendar"></i> <span id="view-task-date"></span></div>
+            </div>
 
-            document.getElementById('current-time').innerText = 
-                `${days[currentDay]} | ${now.toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})} hrs`;
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; border-left: 3px solid var(--odoo-purple);">
+                <strong style="display:block; margin-bottom:5px;">Detalles:</strong>
+                <span id="view-task-desc"></span>
+            </div>
 
-            const grid = document.getElementById('team-grid');
-            
-            if (grid.innerHTML === '') {
-                team.forEach((member, index) => {
-                    let statusClass = 'inactive';
-                    let badgeClass = 'badge-red';
-                    let statusText = 'No Disponible';
-                    let scheduleText = 'Sin horario asignado hoy';
+            <button id="btn-toggle-status" class="btn-primary" style="background-color: var(--status-green); margin-bottom: 10px;" onclick="toggleTaskStatus()"></button>
 
-                    if (member.type === 'Pendiente') {
-                        badgeClass = 'badge-gray';
-                        statusText = 'Horario por definir';
-                        scheduleText = 'Pendiente de asignar';
-                    } 
-                    else if (currentDay >= 1 && currentDay <= 5) {
-                        const todayBlocks = member.schedule[currentDay];
-                        
-                        if (todayBlocks && todayBlocks.length > 0) {
-                            scheduleText = todayBlocks.map(block => {
-                                // ICONOS FLATICON EN LA VISTA PRINCIPAL
-                                const icon = block.type === 'Home Office' 
-                                    ? '<i class="fi fi-rr-home" style="color: var(--status-blue);"></i>' 
-                                    : '<i class="fi fi-rr-building" style="color: var(--status-green);"></i>';
-                                return `<div class="time-block-item" style="justify-content: flex-start;">${icon} ${formatHour(block.start)} a ${formatHour(block.end)}</div>`;
-                            }).join('');
-                            
-                            const activeBlock = todayBlocks.find(b => currentHour >= b.start && currentHour < b.end);
-                            
-                            if (activeBlock) {
-                                if (activeBlock.type === 'Home Office') {
-                                    statusClass = 'active-home';
-                                    badgeClass = 'badge-blue';
-                                    statusText = 'En Línea (Home Office)';
-                                } else {
-                                    statusClass = 'active-office';
-                                    badgeClass = 'badge-green';
-                                    statusText = 'En Oficina';
-                                }
-                            }
-                        } else {
-                            scheduleText = 'Día libre / Clases';
-                        }
-                    } else {
-                        scheduleText = 'Fin de semana';
-                    }
-                    
-                    const cleanPhone = member.phone.replace(/\D/g, '');
+            <div class="comments-section">
+                <strong style="display:block; margin-bottom: 10px;"><i class="fi fi-rr-comment-alt"></i> Evidencias y Notas</strong>
+                
+                <div id="view-task-comments" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;">
+                    <!-- Comentarios -->
+                </div>
+                
+                <!-- PREVIEW DE IMAGEN -->
+                <div id="preview-container">
+                    <img id="preview-image" src="" alt="preview">
+                    <span class="remove-preview" onclick="removeAttachment()">Quitar X</span>
+                </div>
 
-                    const cardHTML = `
-                        <div class="card ${statusClass}">
-                            <div class="name">${member.name}</div>
-                            <div class="status-badge ${badgeClass}">${statusText}</div>
-                            <div class="schedule-info">
-                                <strong>Horario de hoy:</strong><br>
-                                <div style="margin-top: 5px;">${scheduleText}</div>
-                            </div>
-                            
-                            <div class="btn-group">
-                                <!-- ICONOS FLATICON EN LOS BOTONES -->
-                                <button class="action-btn" onclick="toggleView('schedule-${index}', 'info-${index}')">
-                                    <i class="fi fi-rr-calendar"></i> Horario
-                                </button>
-                                <button class="action-btn" onclick="toggleView('info-${index}', 'schedule-${index}')">
-                                    <i class="fi fi-rr-smartphone"></i> Info
-                                </button>
-                            </div>
-                            
-                            <div class="details-section" id="schedule-${index}">
-                                <strong style="display:block; margin-bottom: 10px; color: var(--odoo-purple);">Calendario Semanal:</strong>
-                                ${generateWeeklyScheduleHTML(member)}
-                            </div>
-                            
-                            <div class="details-section" id="info-${index}">
-                                <strong style="display:block; margin-bottom: 5px; color: var(--odoo-purple);">Datos de Contacto:</strong>
-                                <div class="contact-info">
-                                    <strong>Nombre:</strong> ${member.fullName}<br>
-                                    <strong>Teléfono:</strong> <a href="tel:${cleanPhone}" style="color: var(--status-blue); text-decoration: none;">${member.phone}</a>
-                                </div>
-                                
-                                <div class="qr-box">
-                                    <span style="font-size: 12px; color: #555; font-weight: bold;">Escanear para WhatsApp</span><br>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://wa.me/${cleanPhone}" alt="WhatsApp QR" style="border-radius: 5px; margin-top: 8px;">
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    grid.innerHTML += cardHTML;
-                });
-            }
-        }
+                <!-- INPUT DE CHAT -->
+                <div class="chat-input-area">
+                    <label for="evidence-upload" class="attach-btn" title="Adjuntar imagen">
+                        <i class="fi fi-rr-clip"></i>
+                    </label>
+                    <input type="file" id="evidence-upload" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+                    
+                    <input type="text" id="new-comment-text" placeholder="Escribe un comentario o pega un enlace..." onkeypress="handleEnter(event)">
+                    <button class="send-btn" onclick="addComment()"><i class="fi fi-rr-paper-plane"></i></button>
+                </div>
+                <p style="font-size: 10px; color:#999; margin-top: 5px; text-align: center;">Imágenes (máx 2MB) o enlaces de Drive/Loom.</p>
+            </div>
+            <input type="hidden" id="current-task-id">
+        </div>
+    </div>
 
-        updateDashboard();
-        setInterval(updateDashboard, 60000); 
-    </script>
+
+    <!-- ========================================== -->
+    <!-- FIREBASE Y LÓGICA DE JAVASCRIPT            -->
+    <!-- ========================================== -->
+    <script type="module">
+        // 1. IMPORTAR LIBRERÍAS DE FIREBASE
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // 2. TU CONFIGURACIÓN DE FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv5psr_XuDtEmu2V6dY5t8x5Fd0HwKonI",
+            authDomain: "tablero-de-disponibilidad.firebaseapp.com",
+            projectId: "tablero-de-disponibilidad",
+            storageBucket: "tablero-de-disponibilidad.firebasestorage.app",
+            messagingSenderId: "71318840099",
+            appId: "1:71318840099:web:0b353742186405d7dbe296"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tasksRef = ref(db, 'tasks');
+
+        // ==========================================
+        // VARIABLES GLOBALES
+        // ==========================================
+        window.tasksDB = []; 
+        window.loggedUser = localStorage.getItem('odooTaskUser');
+        window.currentDate = new Date();
+        window.currentBase64Image = null;
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        // ==========================================
+        // SINCRONIZACIÓN EN TIEMPO REAL CON FIREBASE
+        // ==========================================
+        onValue(tasksRef, (snapshot) => {
+            const data = snapshot.val();
+            window.tasksDB = data ? data : []; 
+            
+            if(window.loggedUser) {
+                window.renderCalendar();
+            }
+
+            const currentTaskId = document.getElementById('current-task-id').value;
+            if(document.getElementById('modal-view').style.display === 'flex' && currentTaskId) {
+                window.openViewModal(parseInt(currentTaskId));
+            }
+        });
+
+        window.saveTasksToDB = function() {
+            set(tasksRef, window.tasksDB);
+        };
+
+        // ==========================================
+        // LOGIN Y SEGURIDAD
+        // ==========================================
+        const credentials = { 'charly': 'charly2-4-6-8_', 'moises': 'moisex2-4-6-8-0_', 'allan': 'Casaos2-4-6-8-10_' };
+
+        window.checkAuth = function() {
+            if (window.loggedUser) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('task-dashboard').style.display = 'block';
+                document.getElementById('user-info').style.display = 'flex';
+                document.getElementById('logged-user-name').innerText = window.loggedUser.toUpperCase();
+                document.getElementById('btn-create-task').style.display = (window.loggedUser === 'allan') ? 'flex' : 'none';
+                window.renderCalendar();
+            } else {
+                document.getElementById('login-screen').style.display = 'block';
+                document.getElementById('task-dashboard').style.display = 'none';
+                document.getElementById('user-info').style.display = 'none';
+                document.getElementById('btn-create-task').style.display = 'none';
+            }
+        }
+
+        window.login = function() {
+            const user = document.getElementById('login-user').value.toLowerCase().trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            if (credentials[user] && credentials[user] === pass) {
+                window.loggedUser = user; 
+                localStorage.setItem('odooTaskUser', user);
+                document.getElementById('login-error').style.display = 'none'; 
+                window.checkAuth();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        window.logout = function() { 
+            window.loggedUser = null; 
+            localStorage.removeItem('odooTaskUser'); 
+            window.checkAuth(); 
+        }
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tab}`).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(tab === 'tareas' && window.loggedUser) { window.renderCalendar(); }
+        }
+
+        // ==========================================
+        // CALENDARIO
+        // ==========================================
+        window.changeMonth = function(dir) { 
+            window.currentDate.setMonth(window.currentDate.getMonth() + dir); 
+            window.renderCalendar(); 
+        }
+
+        window.renderCalendar = function() {
+            const year = window.currentDate.getFullYear();
+            const month = window.currentDate.getMonth();
+            document.getElementById('month-year-display').innerText = `${monthNames[month]} ${year}`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            const grid = document.querySelector('.calendar-grid');
+            const headers = Array.from(grid.querySelectorAll('.calendar-day-header'));
+            grid.innerHTML = '';
+            headers.forEach(h => grid.appendChild(h));
+
+            const today = new Date();
+            for (let i = firstDay - 1; i >= 0; i--) grid.innerHTML += `<div class="calendar-cell other-month"><div class="date-number">${daysInPrevMonth - i}</div></div>`;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                let isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) ? 'today' : '';
+                
+                const dayTasks = window.tasksDB.filter(t => t.date === dateStr);
+                let tasksHTML = dayTasks.map(t => {
+                    const statusClass = t.status === 'done' ? 'task-done' : 'task-pending';
+                    const icon = t.status === 'done' ? 'fi-rr-check-circle' : 'fi-rr-time-fast';
+                    return `<div class="task-chip ${statusClass}" onclick="openViewModal(${t.id})">
+                                <i class="${icon}"></i> ${t.assignedTo.charAt(0).toUpperCase()}: ${t.title}
+                            </div>`;
+                }).join('');
+
+                grid.innerHTML += `<div class="calendar-cell"><div class="date-number ${isToday}">${day}</div>${tasksHTML}</div>`;
+            }
+            
+            const totalCells = grid.children.length - 7;
+            const remainder = 42 - totalCells;
+            if(remainder < 14) {
+                for (let i = 1; i <= remainder; i++) grid.innerHTML += `<div class="calendar-cell other-month"><div class="date-number">${i}</div></div>`;
+            }
+        }
+
+        // ==========================================
+        // MODALES Y GESTIÓN DE TAREAS
+        // ==========================================
+        window.closeModals = function() {
+            document.getElementById('modal-create').style.display = 'none';
+            document.getElementById('modal-view').style.display = 'none';
+            window.removeAttachment();
+        }
+
+        window.openCreateModal = function() {
+            if(window.loggedUser !== 'allan') return;
+            document.getElementById('new-task-title').value = ''; 
+            document.getElementById('new-task-desc').value = '';
+            document.getElementById('new-task-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-create').style.display = 'flex';
+        }
+
+        window.saveTask = function() {
+            const title = document.getElementById('new-task-title').value.trim();
+            const assignee = document.getElementById('new-task-assignee').value;
+            const date = document.getElementById('new-task-date').value;
+            const desc = document.getElementById('new-task-desc').value.trim();
+            if (!title || !date) return alert("Por favor completa el título y la fecha.");
+
+            window.tasksDB.push({ id: Date.now(), title: title, assignedTo: assignee, date: date, desc: desc, status: 'pending', comments: [] });
+            window.saveTasksToDB(); 
+            window.closeModals();
+        }
+
+        window.openViewModal = function(taskId) {
+            const task = window.tasksDB.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('current-task-id').value = task.id;
+            document.getElementById('view-task-title').innerText = task.title;
+            document.getElementById('view-task-assignee').innerText = task.assignedTo;
+            document.getElementById('view-task-date').innerText = task.date;
+            
+            let linkedDesc = task.desc ? task.desc.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--status-blue);text-decoration:underline;">$1</a>') : 'Sin descripción adicional.';
+            document.getElementById('view-task-desc').innerHTML = linkedDesc;
+
+            const btnStatus = document.getElementById('btn-toggle-status');
+            if (task.status === 'done') {
+                btnStatus.innerHTML = '<i class="fi fi-rr-rotate-right"></i> Reabrir Tarea';
+                btnStatus.style.backgroundColor = 'var(--status-gray)';
+            } else {
+                btnStatus.innerHTML = '<i class="fi fi-rr-check"></i> Marcar como Hecha';
+                btnStatus.style.backgroundColor = 'var(--status-green)';
+            }
+
+            window.renderComments(task);
+            document.getElementById('modal-view').style.display = 'flex';
+        }
+
+        window.toggleTaskStatus = function() {
+            const id = parseInt(document.getElementById('current-task-id').value);
+            const task = window.tasksDB.find(t => t.id === id);
+            if(task) {
+                task.status = task.status === 'done' ? 'pending' : 'done';
+                window.saveTasksToDB(); 
+            }
+        }
+
+        // ==========================================
+        // IMÁGENES Y COMENTARIOS
+        // ==========================================
+        window.handleFileUpload = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if(file.size > 2 * 1024 * 1024) { alert("La imagen es muy pesada. Máximo 2MB para evitar saturar la base de datos."); return; }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    window.currentBase64Image = e.target.result;
+                    document.getElementById('preview-image').src = window.currentBase64Image;
+                    document.getElementById('preview-container').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        window.removeAttachment = function() {
+            window.currentBase64Image = null;
+            document.getElementById('evidence-upload').value = '';
+            document.getElementById('preview-container').style.display = 'none';
+        }
+
+        window.handleEnter = function(e) { if(e.key === 'Enter') window.addComment(); }
+
+        window.addComment = function() {
+            const id = parseInt(document.getElementById('current-task-id').value);
+            const input = document.getElementById('new-comment-text');
+            const text = input.value.trim();
+            
+            if(!text && !window.currentBase64Image) return;
+
+            const task = window.tasksDB.find(t => t.id === id);
+            if(task) {
+                const now = new Date();
+                if(!task.comments) task.comments = []; 
+                task.comments.push({
+                    user: window.loggedUser,
+                    text: text,
+                    image: window.currentBase64Image,
+                    date: `${now.getDate()}/${now.getMonth()+1} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
+                });
+                
+                input.value = '';
+                window.removeAttachment();
+                window.saveTasksToDB();
+            }
+        }
+
+        window.renderComments = function(task) {
+            const container = document.getElementById('view-task-comments');
+            if (!task.comments || task.comments.length === 0) {
+                container.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic;">No hay comentarios o evidencias.</div>';
+                return;
+            }
+
+            container.innerHTML = task.comments.map(c => {
+                let msgText = c.text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--status-blue);text-decoration:underline;">$1 <i class="fi fi-rr-arrow-up-right-from-square" style="font-size:10px;"></i></a>');
+                let imgHTML = c.image ? `<img src="${c.image}" class="evidence-img" onclick="window.open('${c.image}', '_blank')">` : '';
+                
+                return `<div class="comment-item">
+                            <span class="comment-user">${c.user}</span> <span class="comment-date">(${c.date})</span>
+                            <div class="comment-text">${msgText}</div>
+                            ${imgHTML}
+                        </div>`;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ==========================================
+        // DISPONIBILIDAD (ORIGINAL)
+        // ==========================================
+        const team = [
+            { name: 'Grecia', fullName: 'Grecia Berenice Vázquez Sánchez', phone: '524423184083', type: 'Activo', schedule: { 1: [{ start: 8, end: 14, type: 'Oficina' }], 2: [{ start: 8, end: 12, type: 'Oficina' }], 3: [{ start: 11, end: 14, type: 'Home Office' }], 4: [{ start: 8, end: 14, type: 'Oficina' }], 5: [{ start: 11, end: 16, type: 'Home Office' }] } },
+            { name: 'Moises', fullName: 'Moises Enoc Mondragon Islas', phone: '525564397735', type: 'Activo', schedule: { 1: [{ start: 8, end: 11, type: 'Oficina' },{start: 15, end: 17, type: 'Home Office'}], 2: [{ start: 8, end: 12, type: 'Oficina' }], 3: [{ start: 8, end: 12, type: 'Oficina' },{start: 16, end: 17, type: 'Home Office'}], 4: [{start: 16, end: 17, type: 'Home Office'}], 5: [{ start: 8, end: 13, type: 'Home Office' }] } },
+            { name: 'Emmanuel (Emma)', fullName: 'Jose Emmanuel Mota Leyva', phone: '522481770934', type: 'Activo', schedule: { 1: [{ start: 8, end: 11, type: 'Oficina' },{start: 15, end: 17, type: 'Home Office'}], 2: [{ start: 8, end: 12, type: 'Oficina' }], 3: [{ start: 8, end: 12, type: 'Oficina' },{start: 16, end: 17, type: 'Home Office'}], 4: [{start: 16, end: 17, type: 'Home Office'}], 5: [{ start: 8, end: 13, type: 'Home Office' }] } },
+            { name: 'Charly', fullName: 'Carlos Daniel Bravo Cardenas', phone: '525571801567', type: 'Activo', schedule: { 1: [ { start: 9, end: 11, type: 'Home Office' }, { start: 13, end: 16, type: 'Home Office' }, ], 2: [ { start: 8, end: 11, type: 'Oficina' }, ], 3: [ { start: 8, end: 11, type: 'Oficina' }, { start: 15, end: 17, type: 'Home Office' }, ], 4: [ { start: 8, end: 11, type: 'Home Office' }, { start: 15, end: 16, type: 'Home Office' }, ], 5: [ { start: 8, end: 11, type: 'Home Office' }, { start: 14, end: 18, type: 'Home Office' }, ] } },
+            { name: 'Mario', fullName: 'Mario Yael Gordillo García', phone: '525610919906', type: 'Activo', schedule: { 1: [{ start: 8, end: 17, type: 'Oficina' }], 2: [{ start: 8, end: 17, type: 'Oficina' }], 3: [{ start: 8, end: 17, type: 'Oficina' }], 4: [{ start: 8, end: 17, type: 'Oficina' }], 5: [{ start: 8, end: 17, type: 'Home Office' }] } },
+            { name: 'Allan', fullName: 'Allan Casaos Meraz', phone: '525524023052', type: 'Activo', schedule: { 1: [{ start: 8, end: 17, type: 'Oficina' }], 2: [{ start: 8, end: 17, type: 'Oficina' }], 3: [{ start: 8, end: 17, type: 'Oficina' }], 4: [{ start: 8, end: 17, type: 'Oficina' }], 5: [{ start: 8, end: 17, type: 'Home Office' }] } },
+            { name: 'Lupita', fullName: 'Guadalupe Juarez Arredondo', phone: '525629639027', type: 'Activo', schedule: { 1: [{ start: 8, end: 17, type: 'Oficina' }], 2: [{ start: 8, end: 17, type: 'Oficina' }], 3: [{ start: 8, end: 17, type: 'Oficina' }], 4: [{ start: 8, end: 17, type: 'Oficina' }], 5: [{ start: 8, end: 17, type: 'Home Office' }] } }
+        ];
+
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        function formatHour(hour) { if (hour === 12) return '12:00 PM'; if (hour > 12) return (hour - 12) + ':00 PM'; return hour + ':00 AM'; }
+
+        function generateWeeklyScheduleHTML(member) {
+            if (member.type === 'Pendiente') return '<div class="day-row"><span style="color:#888;">No hay horarios registrados aún.</span></div>';
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                const dayBlocks = member.schedule[i];
+                let timeText = (!dayBlocks || dayBlocks.length === 0) ? '<span style="color:var(--status-red);">Día Libre / Clases</span>' : dayBlocks.map(b => `<div class="time-block-item">${b.type === 'Home Office' ? '<i class="fi fi-rr-home" style="color: var(--status-blue);"></i>' : '<i class="fi fi-rr-building" style="color: var(--status-green);"></i>'} ${formatHour(b.start)} a ${formatHour(b.end)}</div>`).join('');
+                html += `<div class="day-row"><span class="day-name">${days[i]}</span><div class="time-blocks">${timeText}</div></div>`;
+            }
+            return html;
+        }
+
+        window.toggleView = function(showId, hideId) {
+            const showDiv = document.getElementById(showId); const hideDiv = document.getElementById(hideId);
+            if (showDiv.classList.contains('show')) showDiv.classList.remove('show');
+            else { hideDiv.classList.remove('show'); showDiv.classList.add('show'); }
+        }
+
+        function updateDashboard() {
+            const now = new Date(); const currentDay = now.getDay(); const currentHour = now.getHours() + (now.getMinutes() / 60);
+            document.getElementById('current-time').innerText = `${days[currentDay]} | ${now.toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})} hrs`;
+
+            const grid = document.getElementById('team-grid');
+            if (grid.innerHTML === '') {
+                team.forEach((member, index) => {
+                    let statusClass = 'inactive'; let badgeClass = 'badge-red'; let statusText = 'No Disponible'; let scheduleText = 'Sin horario asignado hoy';
+                    if (member.type === 'Pendiente') { badgeClass = 'badge-gray'; statusText = 'Horario por definir'; scheduleText = 'Pendiente de asignar'; } 
+                    else if (currentDay >= 1 && currentDay <= 5) {
+                        const todayBlocks = member.schedule[currentDay];
+                        if (todayBlocks && todayBlocks.length > 0) {
+                            scheduleText = todayBlocks.map(b => `<div class="time-block-item" style="justify-content: flex-start;">${b.type === 'Home Office' ? '<i class="fi fi-rr-home" style="color: var(--status-blue);"></i>' : '<i class="fi fi-rr-building" style="color: var(--status-green);"></i>'} ${formatHour(b.start)} a ${formatHour(b.end)}</div>`).join('');
+                            const activeBlock = todayBlocks.find(b => currentHour >= b.start && currentHour < b.end);
+                            if (activeBlock) {
+                                if (activeBlock.type === 'Home Office') { statusClass = 'active-home'; badgeClass = 'badge-blue'; statusText = 'En Línea (Home Office)'; } 
+                                else { statusClass = 'active-office'; badgeClass = 'badge-green'; statusText = 'En Oficina'; }
+                            }
+                        } else scheduleText = 'Día libre / Clases';
+                    } else scheduleText = 'Fin de semana';
+                    const cleanPhone = member.phone.replace(/\D/g, '');
+                    grid.innerHTML += `<div class="card ${statusClass}"><div class="name">${member.name}</div><div class="status-badge ${badgeClass}">${statusText}</div><div class="schedule-info"><strong>Horario de hoy:</strong><br><div style="margin-top: 5px;">${scheduleText}</div></div><div class="btn-group"><button class="action-btn" onclick="toggleView('schedule-${index}', 'info-${index}')"><i class="fi fi-rr-calendar"></i> Horario</button><button class="action-btn" onclick="toggleView('info-${index}', 'schedule-${index}')"><i class="fi fi-rr-smartphone"></i> Info</button></div><div class="details-section" id="schedule-${index}"><strong style="display:block; margin-bottom: 10px; color: var(--odoo-purple);">Calendario Semanal:</strong>${generateWeeklyScheduleHTML(member)}</div><div class="details-section" id="info-${index}"><strong style="display:block; margin-bottom: 5px; color: var(--odoo-purple);">Datos de Contacto:</strong><div class="contact-info"><strong>Nombre:</strong> ${member.fullName}<br><strong>Teléfono:</strong> <a href="tel:${cleanPhone}" style="color: var(--status-blue); text-decoration: none;">${member.phone}</a></div><div class="qr-box"><span style="font-size: 12px; color: #555; font-weight: bold;">Escanear para WhatsApp</span><br><img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://wa.me/${cleanPhone}" alt="WhatsApp QR" style="border-radius: 5px; margin-top: 8px;"></div></div></div>`;
+                });
+            }
+        }
+
+        // INICIO
+        updateDashboard(); 
+        setInterval(updateDashboard, 60000); 
+        window.checkAuth();
+    </script>
 </body>
 </html>
